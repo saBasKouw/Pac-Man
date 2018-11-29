@@ -1,17 +1,22 @@
 class MrPacMan {
-    constructor(xCoordinate, yCoordinate, direction, speed, sprites, endTile=[], animation=[], animationCount=0, path=[], alive=true, strategy='toCorner') {
+    constructor(xCoordinate, yCoordinate, direction, speed, sprites, endTile, cornerTiles) {
         this.xCoordinate = xCoordinate;
         this.yCoordinate = yCoordinate;
         this.direction = direction;
         this.intention = direction;
-        this.alive = alive;
+        this.alive = true;
         this.speed = speed;
+        this.initialSpeed = speed;
         this.sprites = sprites;
-        this.animation = animation;
-        this.animationCount = animationCount;
-        this.path = path;
+        this.initialSprites = sprites;
+        this.animation = [];
+        this.animationCount = 0;
+        this.path = [];
         this.endTile = endTile;
-        this.strategy = strategy;
+        this.strategy = 'toCorner';
+        this.scaredMode = false;
+        this.zombieMode = false;
+        this.cornerTiles = cornerTiles;
 
     }
 
@@ -76,7 +81,7 @@ class MrPacMan {
             return true;
         } else if(this.intention === 'up' && surroundings[2] !== 1) {
             return true;
-        } else return (this.intention === 'down' && surroundings[3] !== 1);
+        } else return (this.intention === 'down' && surroundings[3] !== 1 && (surroundings[3] !== 8 || this.zombieMode));
     }
 
 
@@ -89,7 +94,7 @@ class MrPacMan {
         }
     }
 
-    isOutofBounds(){
+    isOutOfBounds(){
         return (this.xCoordinate <= 0 || this.xCoordinate >= backgroundWidth);
     }
 
@@ -114,7 +119,7 @@ class MrPacMan {
             this.xCoordinate = this.isOnWhichTile(tileSize)[0]*tileSize;
             this.yCoordinate = this.isOnWhichTile(tileSize)[1]*tileSize;
             this.tileDirection(mapArray, tileSize);
-            if(this.noCollision(mapArray, tileSize) && !this.isOutofBounds()){
+            if(this.noCollision(mapArray, tileSize) && !this.isOutOfBounds()){
 
                 this.direction = this.intention;
 
@@ -125,27 +130,31 @@ class MrPacMan {
 
     }
 
+
+
     followPath(mapArray, tileSize) {
         let surroundings = this.indexOfSurroundings(mapArray, tileSize);
         if(this.path === undefined){
             this.intention = random(['right', 'left', 'up', 'down']);
             return;
-        }
-        for (let node of this.path) {
-            for (let i = 0; i < surroundings.length; i++) {
-                if (node[0] === surroundings[i][0] && node[1] === surroundings[i][1]) {
-                    if (i === 0) {
-                        this.intention = 'right';
-                    } else if (i === 1) {
-                        this.intention = 'left';
-                    } else if (i === 2) {
-                        this.intention = 'up';
-                    } else if (i === 3) {
-                        this.intention = 'down';
+        } else if(!this.scaredMode) {
+            for (let node of this.path) {
+                for (let i = 0; i < surroundings.length; i++) {
+                    if (node[0] === surroundings[i][0] && node[1] === surroundings[i][1]) {
+                        if (i === 0) {
+                            this.intention = 'right';
+                        } else if (i === 1) {
+                            this.intention = 'left';
+                        } else if (i === 2) {
+                            this.intention = 'up';
+                        } else if (i === 3) {
+                            this.intention = 'down';
+                        }
                     }
                 }
             }
         }
+
     }
 
 

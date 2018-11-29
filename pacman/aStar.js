@@ -36,6 +36,11 @@ function aStar(start, goal){
         for (let newPosition of [[1, 0], [-1, 0], [0,1], [0,-1]]){
             let nodePosition = [currentNode.tile[0] + newPosition[0],
                 currentNode.tile[1] + newPosition[1]];
+
+            if(nodePosition[0] > 27 || nodePosition[0] < 0 || nodePosition[1] > 31 || nodePosition[1] < 0){
+                continue;
+            }
+
             if(mapArray[nodePosition[1]][nodePosition[0]] === 1){
                 continue;
             }

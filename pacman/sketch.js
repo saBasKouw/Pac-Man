@@ -9,8 +9,10 @@ let spriteData;
 let frames;
 
 const tileSize = 16;
-let pacManSpeed = 2.2;
-let spriteSpeed = 1.3;
+let pacManSpeed = 1.7;
+let spriteSpeed = 1.7;
+let blinkySpeed = 1.73;
+let inkySPeed = 1.6;
 
 
 const animationRightPac = [2, 1, 0];
@@ -25,24 +27,30 @@ const scaredSprites = [[68, 69], [68,69], [68,69], [68,69]];
 const scaredSpritesTwo = [[68, 69, 70, 71], [68, 69, 70, 71], [68, 69, 70, 71], [68, 69, 70, 71]];
 const deadSprites = [[83], [84], [85],[86]];
 
+
 const blinkySprites = [[60,61], [62,63], [64,65], [66,67]];
 const pinkySprites = [[75, 76], [77,78], [79,80], [81,82]];
 const inkySprites = [[90, 91], [92,93], [94,95], [96,97]];
 const clydeSprites = [[105, 106], [107,108], [109,110], [111,112]];
 
-let PacMan = new MrPacMan(14*16-8, 23*16, 'right', pacManSpeed, pacManSprites, [4, 20]);
+let PacMan = new MrPacMan(14*16-8, 23*16, 'right', pacManSpeed, pacManSprites, [4, 20], []);
 
-let Blinky = new MrPacMan(26*16, 16, 'up', spriteSpeed, blinkySprites, [21, 5]);
-let Clyde = new MrPacMan(16, 29*16, 'left', spriteSpeed, clydeSprites, [12, 29]);
-let Pinky = new MrPacMan(16, 16, 'left', spriteSpeed, pinkySprites, [6, 5]);
-let Inky = new MrPacMan(26*16, 29*16, 'right', spriteSpeed, inkySprites, [15, 29]);
+let Blinky = new MrPacMan(13*16, 11*16, 'up', blinkySpeed, blinkySprites, [21, 5], [[26,1], [21,5], [26,1]]);
+let Clyde = new MrPacMan(13*16, 14*16, 'up', spriteSpeed, clydeSprites, [12, 29], [[1,29], [12,29], [6,23], [1,26], [1,29]]);
+let Pinky = new MrPacMan(12*16, 14*16, 'up', spriteSpeed, pinkySprites, [6, 5], [[1,1], [6,5], [1,1]]);
+let Inky = new MrPacMan(15*16, 14*16, 'up', inkySPeed, inkySprites, [15, 29], [[26,29], [15,29], [21,23], [26,26], [26,29]]);
+
 
 
 let inkyStrategy = 'Clyde';
 let counter = 0;
-let scaredMode = false;
+let scaredCounter = 0;
+// let scaredMode = false;
+
+let animationDieCount = 0;
 let countStrategy = 1000;
-let ghost = {'Blinky': Blinky, 'Pinky': Pinky, 'Clyde': Clyde, 'Inky': Inky};
+
+// let ghost = {'Blinky': Blinky, 'Pinky': Pinky, 'Clyde': Clyde, 'Inky': Inky};
 
 function foodOnMap(){
     for(let i = 0; i < mapArray[0].length; i++) {
@@ -57,18 +65,15 @@ function foodOnMap(){
 }
 
 function initializeGame(){
-   PacMan = new MrPacMan(PacMan.isOnWhichTile(tileSize)[0]*16, PacMan.isOnWhichTile(tileSize)[1]*16, 'right', pacManSpeed, pacManSprites, [4, 20]);
-   Blinky = new MrPacMan(26*16, 16, 'up', spriteSpeed, blinkySprites, [21, 5]);
-   Clyde = new MrPacMan(16, 29*16, 'left', spriteSpeed, clydeSprites, [12, 29]);
-   Pinky = new MrPacMan(16, 16, 'left', spriteSpeed, pinkySprites, [6, 5]);
-   Inky = new MrPacMan(26*16, 29*16, 'right', spriteSpeed, inkySprites, [15, 29]);
+   PacMan = new MrPacMan(PacMan.isOnWhichTile(tileSize)[0]*16, PacMan.isOnWhichTile(tileSize)[1]*16, 'right', pacManSpeed, pacManSprites, [4, 20], []);
+
+    Blinky = new MrPacMan(13*16, 11*16, 'up', blinkySpeed, blinkySprites, [21, 5], [[26,1], [21,5], [26,1]]);
+    Clyde = new MrPacMan(13*16, 14*16, 'up', spriteSpeed, clydeSprites, [12, 29], [[1,29], [12,29], [6,23], [1,26], [1,29]]);
+    Pinky = new MrPacMan(12*16, 14*16, 'up', spriteSpeed, pinkySprites, [6, 5], [[1,1], [6,5], [1,1]]);
+    Inky = new MrPacMan(15*16, 14*16, 'up', inkySPeed, inkySprites, [15, 29], [[26,29], [15,29], [21,23], [26,26], [26,29]]);
    inkyStrategy = 'Clyde';
    foodOnMap();
    counter = 0;
-    scaredMode = false;
-    ghost = {'Blinky': Blinky, 'Pinky': Pinky, 'Clyde': Clyde, 'Inky': Inky};
-
-    let countStrategy = 1000;
 
 }
 
@@ -166,13 +171,14 @@ function imageToAnimation(actor, sprites, frames){
 function animateDeath(){
     imageToAnimation(PacMan, PacManDieSprites[0], frames);
     if(frameCount % 7 === 0){
-        PacMan.animationCount++;
+        animationDieCount++;
     }
-    image(PacMan.animation[PacMan.animationCount % PacMan.animation.length], PacMan.xCoordinate-7, PacMan.yCoordinate-7, 32, 32);
-    if(PacMan.animationCount % PacManDieSprites[0].length === 0){
+    image(PacMan.animation[animationDieCount], PacMan.xCoordinate-7, PacMan.yCoordinate-7, 32, 32);
+    if(animationDieCount >= PacManDieSprites[0].length-1){
         PacMan.alive = true;
         PacMan.xCoordinate = 14*16-8;
         PacMan.yCoordinate = 23*16;
+        animationDieCount = 0;
         initializeGame();
     }
 }
@@ -202,7 +208,7 @@ function drawFood() {
                 if(frameCount % 30 < 25 ){
                     stroke(100);
                     fill(255, 192, 203);
-                    rect(j+2, i+2, 10, 10);
+                    ellipse(j+8, i+8, 16, 16);
                 }
             }
         }
@@ -219,10 +225,11 @@ function eatFood(){
             mapArray[tile[1]][tile[0]] = 3;
         } else if(mapArray[tile[1]][tile[0]] === 6){
             mapArray[tile[1]][tile[0]] = 7;
-            console.log('death');
-            scaredMode = true;
-            counter = 0;
-
+            scaredCounter = 0;
+            Blinky.scaredMode = true;
+            Pinky.scaredMode = true;
+            Clyde.scaredMode = true;
+            Inky.scaredMode = true;
         }
     }
 }
@@ -238,17 +245,13 @@ function countPoints(){
                 points += 100;
             }
         }
+        fill(255);
+        text(points, width * .5 , height - 40);
     } return points;
 }
 
 
 
-function getRandomTile(){
-    let result = [Math.floor(random(mapArray[0].length-1)), Math.floor(random(mapArray.length-1))];
-    while(mapArray[result[1]][result[0]] === 1){
-        result = [Math.floor(random(mapArray[0].length-1)), Math.floor(random(mapArray.length-1))];
-    } return result;
-}
 
 function getTileInFront(){
     let result = [];
@@ -271,14 +274,14 @@ function getTileInFront(){
 }
 
 
-function toCornerAndPatrol(actor, corner, patrolScript){
+function toCornerAndPatrol(actor){
     if(actor.strategy === 'toCorner'){
-        actor.endTile = corner;
+        actor.endTile = actor.cornerTiles[0];
         if(actor.locationIsSame(actor.endTile, tileSize)){
             actor.strategy = 'patrol';
         }
     } else if(actor.strategy === 'patrol'){
-        scriptedMovement(actor, patrolScript);
+        scriptedMovement(actor);
     }
 }
 
@@ -286,7 +289,7 @@ function blinkyMoveStrategy(actor){
     actor.endTile = PacMan.isOnWhichTile(tileSize);
 }
 
-function clydeMoveStrategy(actor, corner, patrolScript){
+function clydeMoveStrategy(actor){
     if (actor.distanceToOther(PacMan, tileSize) > 20 || PacMan.isOnWhichTile(tileSize)[0] < 14 && PacMan.isOnWhichTile(tileSize)[1] > 22) {
         actor.strategy = 'chase';
     } else if(actor.distanceToOther(PacMan, tileSize) < 8 && !(actor.strategy === 'patrol')){
@@ -294,7 +297,7 @@ function clydeMoveStrategy(actor, corner, patrolScript){
     }
     if(actor.strategy === 'chase'){
         actor.endTile =  PacMan.isOnWhichTile(tileSize);
-    } toCornerAndPatrol(actor, corner, patrolScript);
+    } toCornerAndPatrol(actor);
 }
 
 function pinkyMoveStrategy(actor){
@@ -305,7 +308,7 @@ function inkyMoveStrategy(actor){
     if(inkyStrategy === 'Blinky'){
         blinkyMoveStrategy(actor);
     } else if(inkyStrategy === 'Clyde'){
-        clydeMoveStrategy(actor, [26, 29], [[26,29], [15,29], [21,23], [26,26], [26,29]]);
+        clydeMoveStrategy(actor);
     } else if(inkyStrategy === 'Pinky'){
         pinkyMoveStrategy(actor);
     }
@@ -314,44 +317,39 @@ function inkyMoveStrategy(actor){
 
 function onIntersection(actor){
     let surroundings = actor.surroundingTiles(mapArray, tileSize);
-    return (surroundings[0] !== 1 && surroundings[1] !== 1 || surroundings[2] !== 1 && surroundings[3] !== 1);
+    return !(surroundings[0] === 1 && surroundings[1] === 1 || surroundings[2] === 1 && surroundings[3] === 1);
 }
 
 ///////////////////////////////
-function scaredModeStrategy(){
-    for(let actor of Object.entries(ghost)){
-        actor[1].sprites = scaredSprites;
-        if(onIntersection(actor[1])){
-            actor[1].endTile = getRandomTile();
-            onIntersection(actor[1]);
-        }
-        actor[1].alive = false;
+function scaredModeStrategy(actor){
+    if(scaredCounter < 500){
+        actor.sprites = scaredSprites;
+    } else {
+        actor.sprites = scaredSpritesTwo;
     }
+
+        if(onIntersection(actor)){
+            if(actor.intention === 'right'){
+                actor.intention = random(['right', 'up', 'down']);
+            } else if(actor.intention === 'left'){
+                actor.intention = random(['left', 'up', 'down']);
+            } else if(actor.intention === 'up'){
+                actor.intention = random(['right','left', 'up']);
+            } else if(actor.intention === 'down'){
+                actor.intention = random(['right','left', 'down']);
+            }
+
+
+
+        }
+        actor.alive = false;
 }
 
-function allToCornerPatrol(){
-    toCornerAndPatrol(Blinky, [26, 1], [[26,1], [21,5], [26,1]]);
-    toCornerAndPatrol(Clyde, [1, 29], [[1,29], [12,29], [6,23], [1,26], [1,29]]);
-    toCornerAndPatrol(Pinky, [1,1], [[1,1], [6,5], [1,1]]);
-    toCornerAndPatrol(Inky, [26, 29], [[26,29], [15,29], [21,23], [26,26], [26,29]]);
-}
 
-function toCornerMode(){
-    Blinky.strategy = 'toCorner';
-    Pinky.strategy = 'toCorner';
-    Clyde.strategy = 'toCorner';
-    Inky.strategy = 'toCorner';
-    Blinky.sprites = blinkySprites;
-    Clyde.sprites = clydeSprites;
-    Pinky.sprites = pinkySprites;
-    Inky.sprites = inkySprites;
-}
-
-
-function scriptedMovement(actor, tileArray){
-    for(let i = 0; i < tileArray.length-1; i++){
-        if(actor.locationIsSame(tileArray[i], tileSize)) {
-            actor.endTile = tileArray[i + 1];
+function scriptedMovement(actor){
+    for(let i = 0; i < actor.cornerTiles.length-1; i++){
+        if(actor.locationIsSame(actor.cornerTiles[i], tileSize)) {
+            actor.endTile = actor.cornerTiles[i + 1];
         }
     }
 }
@@ -359,8 +357,8 @@ function scriptedMovement(actor, tileArray){
 
 
 function notInTunnel(actor){
-    for(let tile of [[0,14], [1,14], [2,14], [3,14], [4,14], [23,14], [24,14], [25,14], [26,14], [27,14]]){
-        if(actor.locationIsSame(tile,tileSize)){
+    for(let tile of [[-1,14], [0,14], [1,14], [2,14], [3,14], [4,14], [23,14], [24,14], [25,14], [26,14], [27,14], [28,14]]){
+        if(actor.locationIsSame(tile, tileSize)){
             return false;
         }
     } return true;
@@ -372,12 +370,7 @@ function followPac(actor){
     }
 }
 
-function PacManDies(){
-    return (PacMan.collisionWithOther(Blinky, tileSize) ||
-        PacMan.collisionWithOther(Pinky, tileSize) ||
-        PacMan.collisionWithOther(Clyde, tileSize) ||
-        PacMan.collisionWithOther(Inky, tileSize));
-}
+
 
 function collisionWithWho(){
     return [PacMan.collisionWithOther(Blinky, tileSize),
@@ -400,130 +393,96 @@ function collisionDeathly(){
     }
 }
 
-function collisionEatable(){
-    let collisions = collisionWithWho();
-    if(collisions[0] && !Blinky.alive){
-        return 'Blinky';
-    } else if(collisions[1] && !Pinky.alive){
-        return 'Pinky';
-    } else if(collisions[2] && !Clyde.alive){
-        return 'Clyde';
-    } else if(collisions[3] && !Inky.alive){
-        return 'Inky';
-    } else {
-        return false;
+
+
+function ghostDeath(actor) {
+    if(PacMan.collisionWithOther(actor, tileSize) && !actor.alive) {
+        actor.zombieMode = true;
+        actor.scaredMode = false;
     }
-}
-
-
-function ghostDeath() {
-    if(collisionEatable() === 'Blinky'){
-        Blinky.sprites = deadSprites;
-        delete ghost['Blinky'];
-        Blinky.endTile = [13, 14];
-        Blinky.speed = 3;
-    } else if(collisionEatable() === 'Pinky') {
-        Pinky.sprites = deadSprites;
-        delete ghost['Pinky'];
-        Pinky.endTile = [13, 14];
-        Pinky.speed = 3;
-    } else if(collisionEatable() === 'Clyde') {
-        Clyde.sprites = deadSprites;
-        delete ghost['Clyde'];
-        Clyde.endTile = [13, 14];
-        Clyde.speed = 3;
-    } else if(collisionEatable() === 'Inky') {
-        Inky.sprites = deadSprites;
-        delete ghost['Inky'];
-        Inky.endTile = [13, 14];
-        Inky.speed = 3;
-    }
-}
-
-
-function inGhostHouse(actor){
-    for(let i = 0; i < 3; i++){
-        for(let j = 0; j < 6; j++){
-            if (actor.locationIsSame([11+j,13+i], tileSize)) {
-                return true;
-            }
-        }
-    } return false;
-}
-
-function whichGhostInHouse(){
-    let result = [];
-    for(let actor of [Blinky, Pinky, Clyde, Inky]){
-        result.push(inGhostHouse(actor));
-    } return result;
 }
 
 function whenInHouse(){
-    let whichActors = whichGhostInHouse();
-    for(let i = 0; i < whichActors.length; i++){
-        if(whichActors[i] && i === 0){
-          Blinky.speed = 0.8;
-          Blinky.sprites = blinkySprites;
-        } else if(whichActors[i] && i === 1){
-            Pinky.speed = 0.8;
-            Pinky.sprites = pinkySprites;
-        } else if(whichActors[i] && i === 2){
-            Clyde.speed = 0.8;
-            Clyde.sprites = clydeSprites;
-        } else if(whichActors[i] && i === 3){
-            Inky.speed = 0.8;
-            Inky.sprites = inkySprites;
-        }
-    }
-}
-
-function onlyZombies(){
-    for(let actor of Object.entries(ghost)){
-        actor[1].speed = 0.8;
-        if(counter > 300){
-            actor[1].sprites = scaredSpritesTwo;
-        }
-    }
-}
-
-
-function givePaths(){
     for(let actor of [Blinky, Pinky, Clyde, Inky]){
-        actor.path = aStar(actor.isOnWhichTile(tileSize), actor.endTile, actor);
+        for(let i = 0; i < 3; i++){
+            for(let j = 0; j < 6; j++){
+                if (actor.locationIsSame([11+j,13+i], tileSize)) {
+                    actor.speed = 0.8;
+                    actor.sprites = actor.initialSprites;
+                    actor.strategy = 'toCorner';
+                    actor.zombieMode = false;
+                    actor.alive = true;
+                } else if(!actor.scaredMode && !actor.zombieMode) {
+                    if(!notInTunnel(actor)){
+                       actor.speed = 0.8;
+                    } else {
+                        actor.speed = actor.initialSpeed;
+                    }
+
+                }
+            }
+        }
     }
 }
+
+function onlyZombies(actor){
+    if(actor.scaredMode){
+        actor.speed = 1.4;
+    }
+}
+
 
 function ghostStrategies(){
-    if(scaredMode){
-        scaredModeStrategy();
-        countStrategy = 500;
-        ghostDeath();
-        whenInHouse();
-        onlyZombies();
-
-    } else if(counter < 500){
-        allToCornerPatrol();
-    } else if(counter < countStrategy) {
-        blinkyMoveStrategy(Blinky);
-        clydeMoveStrategy(Clyde, [1, 29], [[1,29], [12,29], [6,23], [1,26], [1,29]]);
-        pinkyMoveStrategy(Pinky);
-        inkyMoveStrategy(Inky);
-    }
-    if(counter === countStrategy){
-        counter = 0;
-        scaredMode = false;
-        countStrategy = 1000;
-        for(let actor of [Blinky, Pinky, Clyde, Inky]){
-            actor.alive = true;
-            actor.speed = 1.3;
-            ghost = {'Blinky': Blinky, 'Pinky': Pinky, 'Clyde': Clyde, 'Inky': Inky};
+    for(let actor of [Blinky, Pinky, Clyde, Inky]){
+        if(actor.scaredMode){
+            onlyZombies(actor);
+            scaredModeStrategy(actor);
+            ghostDeath(actor);
+            scaredCounter++;
+        }
+        if(actor.zombieMode){
+            actor.sprites = deadSprites;
+            actor.endTile = [13, 14];
+            actor.speed = 3;
+        } else if(counter < 500){
+            toCornerAndPatrol(actor);
+        } else if(counter < countStrategy) {
+            if(actor === Blinky){
+                blinkyMoveStrategy(Blinky);
+            } else if (actor === Pinky){
+                pinkyMoveStrategy(Pinky);
+            } else if (actor === Clyde){
+                clydeMoveStrategy(Clyde);
+            } else if (actor === Inky){
+                inkyMoveStrategy(Inky);
+            }
         }
 
-        inkyStrategy = random(['Blinky', 'Clyde', 'Pinky']);
-        toCornerMode();
+        if(scaredCounter === 1500){
+            scaredCounter = 0;
+            for(let actor of [Blinky, Pinky, Clyde, Inky]){
+                if(actor.scaredMode){
+                    actor.scaredMode = false;
+                    actor.alive = true;
+                    actor.speed = actor.initialSpeed;
+                    actor.strategy = 'toCorner';
+                    actor.sprites = actor.initialSprites;
+                }
+            }
+        }
+
+        if(counter === countStrategy){
+            counter = 0;
+            for(let actor of [Blinky, Pinky, Clyde, Inky]){
+                actor.strategy = 'toCorner';
+            }
+            inkyStrategy = random(['Blinky', 'Clyde', 'Pinky']);
+            }
+        whenInHouse();
+
+        actor.path = aStar(actor.isOnWhichTile(tileSize), actor.endTile, actor);
     }
     counter++;
-    givePaths();
 }
 
 
@@ -549,23 +508,48 @@ function preload(){
 
 function setup() {
     background_image = loadImage("img/map.jpg");
-    createCanvas(backgroundWidth, backgroundHeight);
+    createCanvas(backgroundWidth, backgroundHeight+30);
     frameRate(60);
     frames = spriteData.frames;
 }
 
-function draw() {
 
+
+function draw() {
         if(collisionDeathly()){
             PacMan.alive = false;
+
+
         }
-        background(background_image);
+        let old_direction = PacMan.direction;
+
+    // image(actor.animation[actor.animationCount % actor.animation.length], actor.xCoordinate-5, actor.yCoordinate-5, 28, 28);
+
+    background(0);
+    image(background_image, 0, 0, backgroundWidth, backgroundHeight);
         if(PacMan.alive){
             actAll();
 
         } else {
             animateDeath();
         }
+
+
+
+    if(PacMan.direction !== old_direction && PacMan.noCollision(mapArray, tileSize)){
+        console.log('corner');
+        if (PacMan.direction === 'right'){
+            PacMan.xCoordinate += 3;
+        } else if(PacMan.direction === 'left' ){
+            PacMan.xCoordinate -=3;
+        } else if(PacMan.direction === 'up'){
+            PacMan.yCoordinate -=3;
+        } else if(PacMan.direction === 'down'){
+            PacMan.yCoordinate +=3;
+        }
+
+    }
+
     // drawPath(Blinky.path, 'red');
     // createGrid();
     // gridPointer();
