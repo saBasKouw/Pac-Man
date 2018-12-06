@@ -37,7 +37,7 @@ let PacMan = new MrPacMan(14*16-8, 23*16, 'right', pacManSpeed, pacManSprites, [
 
 let Blinky = new MrPacMan(13*16, 11*16, 'up', blinkySpeed, blinkySprites, [21, 5], [[26,1], [21,5], [26,1]]);
 let Clyde = new MrPacMan(13*16, 14*16, 'up', spriteSpeed, clydeSprites, [12, 29], [[1,29], [12,29], [6,23], [1,26], [1,29]]);
-let Pinky = new MrPacMan(12*16, 14*16, 'up', spriteSpeed, pinkySprites, [6, 5], [[1,1], [6,5], [1,1]]);
+let Pinky = new MrPacMan(11*16, 14*16, 'up', spriteSpeed, pinkySprites, [6, 5], [[1,1], [6,5], [1,1]]);
 let Inky = new MrPacMan(15*16, 14*16, 'up', inkySPeed, inkySprites, [15, 29], [[26,29], [15,29], [21,23], [26,26], [26,29]]);
 
 
@@ -69,7 +69,7 @@ function initializeGame(){
 
     Blinky = new MrPacMan(13*16, 11*16, 'up', blinkySpeed, blinkySprites, [21, 5], [[26,1], [21,5], [26,1]]);
     Clyde = new MrPacMan(13*16, 14*16, 'up', spriteSpeed, clydeSprites, [12, 29], [[1,29], [12,29], [6,23], [1,26], [1,29]]);
-    Pinky = new MrPacMan(12*16, 14*16, 'up', spriteSpeed, pinkySprites, [6, 5], [[1,1], [6,5], [1,1]]);
+    Pinky = new MrPacMan(11*16, 14*16, 'up', spriteSpeed, pinkySprites, [6, 5], [[1,1], [6,5], [1,1]]);
     Inky = new MrPacMan(15*16, 14*16, 'up', inkySPeed, inkySprites, [15, 29], [[26,29], [15,29], [21,23], [26,26], [26,29]]);
    inkyStrategy = 'Clyde';
    foodOnMap();
@@ -402,26 +402,29 @@ function ghostDeath(actor) {
     }
 }
 
-function whenInHouse(){
-    for(let actor of [Blinky, Pinky, Clyde, Inky]){
+function whenInHouse(actor){
+    let inHouse = false;
         for(let i = 0; i < 3; i++){
             for(let j = 0; j < 6; j++){
                 if (actor.locationIsSame([11+j,13+i], tileSize)) {
-                    actor.speed = 0.8;
-                    actor.sprites = actor.initialSprites;
-                    actor.strategy = 'toCorner';
-                    actor.zombieMode = false;
-                    actor.alive = true;
-                } else if(!actor.scaredMode && !actor.zombieMode) {
-                    if(!notInTunnel(actor)){
-                       actor.speed = 0.8;
-                    } else {
-                        actor.speed = actor.initialSpeed;
-                    }
-
+                    inHouse = true;
                 }
             }
         }
+
+        if(inHouse && !actor.zombieMode){
+            actor.speed = 0.6;
+        } else if(actor.locationIsSame([13, 14], 16)){
+            actor.sprites = actor.initialSprites;
+            actor.strategy = 'toCorner';
+            actor.zombieMode = false;
+            actor.alive = true;
+        } else if(!inHouse && !actor.scaredMode && !actor.zombieMode) {
+            if(!notInTunnel(actor)){
+                actor.speed = 0.8;
+            } else {
+                actor.speed = actor.initialSpeed;
+            }
     }
 }
 
@@ -458,7 +461,7 @@ function ghostStrategies(){
             }
         }
 
-        if(scaredCounter === 1500){
+        if(scaredCounter === 1000){
             scaredCounter = 0;
             for(let actor of [Blinky, Pinky, Clyde, Inky]){
                 if(actor.scaredMode){
@@ -478,7 +481,7 @@ function ghostStrategies(){
             }
             inkyStrategy = random(['Blinky', 'Clyde', 'Pinky']);
             }
-        whenInHouse();
+        whenInHouse(actor);
 
         actor.path = aStar(actor.isOnWhichTile(tileSize), actor.endTile, actor);
     }
